@@ -182,6 +182,164 @@ function removeJahresEvent(i) {
 function saveJahresplanung() {
   showToast('Jahresplanung gespeichert. Klick «Veröffentlichen» um live zu schalten.');
 }
+
+// ═══════════════════════════════════════════════
+//  LIVE PREVIEW
+// ═══════════════════════════════════════════════
+function updatePreview(section) {
+  const frame = document.getElementById('preview-frame');
+  const placeholder = document.getElementById('preview-placeholder');
+  const status = document.getElementById('preview-status');
+  
+  placeholder.style.display = 'none';
+  frame.style.display = 'block';
+  status.textContent = section;
+
+  const logo = appData.hero?.logo || '';
+  const bg = appData.hero?.background || '';
+  const badge = appData.hero?.badge || 'Fussballclub · Lausen BL · Seit 1962';
+  const title = appData.hero?.title || 'AC Rossoneri';
+  const sub = appData.hero?.sub || 'Non Mollare!';
+  const news = appData.news || [];
+  const vorstand = appData.vorstand || {};
+  const cantina = appData.cantina || {};
+
+  let html = '';
+
+  if (section === 'Hero / Startseite') {
+    html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { font-family:'Arial',sans-serif; background:#0A0A0A; color:#F5F5F5; }
+      .hero {
+        height:100vh; display:flex; align-items:center; justify-content:center;
+        text-align:center; position:relative; overflow:hidden;
+        background-image:url('${bg}'); background-size:cover; background-position:center;
+      }
+      .overlay { position:absolute; inset:0; background:rgba(0,0,0,0.55); }
+      .content { position:relative; z-index:2; padding:2rem; }
+      .logo { width:80px; height:80px; object-fit:contain; margin-bottom:1rem; }
+      .badge { border:1px solid #CC0000; color:#CC0000; font-size:0.65rem; font-weight:700; letter-spacing:3px; text-transform:uppercase; padding:0.3rem 1rem; margin-bottom:1rem; display:inline-block; }
+      .title { font-size:5rem; font-weight:900; line-height:0.9; letter-spacing:4px; text-transform:uppercase; }
+      .accent { color:#CC0000; }
+      .sub { margin-top:1rem; font-size:0.8rem; letter-spacing:4px; text-transform:uppercase; color:rgba(245,245,245,0.65); }
+    </style></head><body>
+    <div class="hero">
+      <div class="overlay"></div>
+      <div class="content">
+        ${logo ? `<img src="${logo}" class="logo" alt="Logo">` : ''}
+        <div class="badge">${badge}</div>
+        <div class="title">AC <span class="accent">Rossoneri</span></div>
+        <div class="sub">${sub}</div>
+      </div>
+    </div></body></html>`;
+  }
+
+  else if (section === 'News & Beiträge') {
+    const cards = news.slice(0,3).map(n => `
+      <div style="background:#1E1E1E;border-top:3px solid #CC0000;padding:1rem;margin-bottom:1rem;">
+        ${n.image ? `<img src="${n.image}" style="width:100%;height:120px;object-fit:cover;margin-bottom:0.75rem;">` : `<div style="width:100%;height:80px;background:#333;display:flex;align-items:center;justify-content:center;color:#666;font-size:0.7rem;margin-bottom:0.75rem;">Kein Bild</div>`}
+        <div style="font-size:0.65rem;color:#CC0000;font-weight:700;letter-spacing:2px;text-transform:uppercase;">${n.label||n.date}</div>
+        <div style="font-weight:700;font-size:0.9rem;margin:0.3rem 0;">${n.title}</div>
+        <div style="font-size:0.75rem;color:rgba(245,245,245,0.65);line-height:1.5;">${(n.text||'').substring(0,100)}...</div>
+      </div>`).join('');
+    html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:Arial,sans-serif; background:#0A0A0A; color:#F5F5F5; padding:1rem; font-size:13px; }</style>
+    </head><body><div style="font-size:0.6rem;color:#CC0000;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:0.5rem;">AKTUELLES</div>
+    <div style="font-size:1.5rem;font-weight:900;margin-bottom:1rem;">NEWS & BERICHTE</div>
+    ${cards || '<p style="color:#666;">Noch keine Beiträge</p>'}
+    </body></html>`;
+  }
+
+  else if (section === 'Vorstand') {
+    const cop = vorstand.coPraesidenten || [];
+    const mitglieder = vorstand.mitglieder || [];
+    html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:Arial,sans-serif; background:#0A0A0A; color:#F5F5F5; padding:1rem; font-size:12px; }</style>
+    </head><body>
+    <div style="font-size:0.6rem;color:#CC0000;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:0.5rem;">VEREIN</div>
+    <div style="font-size:1.5rem;font-weight:900;margin-bottom:1rem;">VORSTAND</div>
+    <div style="display:flex;gap:1rem;margin-bottom:1rem;">
+      ${cop.map(c => `<div style="text-align:center;flex:1;">
+        ${c.bild ? `<img src="${c.bild}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #CC0000;">` : `<div style="width:60px;height:60px;border-radius:50%;background:#333;margin:0 auto;border:2px solid #CC0000;"></div>`}
+        <div style="font-weight:700;font-size:0.8rem;margin-top:0.3rem;">${c.name}</div>
+        <div style="font-size:0.65rem;color:#CC0000;">${c.funktion}</div>
+      </div>`).join('')}
+    </div>
+    ${mitglieder.map(m => `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid #1E1E1E;">
+      <div style="width:6px;height:6px;background:#CC0000;border-radius:50%;flex-shrink:0;"></div>
+      <div style="font-weight:600;flex:1;">${m.name}</div>
+      <div style="color:#CC0000;font-size:0.7rem;">${m.funktion}</div>
+    </div>`).join('')}
+    </body></html>`;
+  }
+
+  else if (section === 'La Cantina') {
+    html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:Arial,sans-serif; background:#0A0A0A; color:#F5F5F5; padding:1rem; font-size:12px; }</style>
+    </head><body>
+    <div style="font-size:0.6rem;color:#CC0000;font-weight:700;letter-spacing:3px;margin-bottom:0.5rem;">CLUBHAUS</div>
+    <div style="font-size:1.5rem;font-weight:900;margin-bottom:0.75rem;">LA CANTINA</div>
+    ${cantina.bild ? `<img src="${cantina.bild}" style="width:100%;height:120px;object-fit:cover;margin-bottom:0.75rem;">` : ''}
+    <div style="color:rgba(245,245,245,0.7);line-height:1.6;font-size:0.8rem;margin-bottom:0.75rem;">${cantina.text||''}</div>
+    <div style="background:#1E1E1E;padding:0.75rem;margin-bottom:0.5rem;">
+      <div style="font-size:0.65rem;color:#CC0000;font-weight:700;letter-spacing:2px;margin-bottom:0.25rem;">VERANTWORTLICHE</div>
+      <div>${cantina.chef1||''} · ${cantina.chef2||''}</div>
+    </div>
+    ${cantina.zeiten ? `<div style="background:#1E1E1E;padding:0.75rem;">
+      <div style="font-size:0.65rem;color:#CC0000;font-weight:700;letter-spacing:2px;margin-bottom:0.25rem;">ÖFFNUNGSZEITEN</div>
+      <div style="white-space:pre-line;">${cantina.zeiten}</div>
+    </div>` : ''}
+    </body></html>`;
+  }
+
+  else {
+    html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:Arial,sans-serif; background:#0A0A0A; color:#F5F5F5; padding:2rem; display:flex; align-items:center; justify-content:center; min-height:100vh; }</style>
+    </head><body><div style="text-align:center;color:rgba(245,245,245,0.4);">
+      <div style="font-size:3rem;margin-bottom:1rem;">👁</div>
+      <div>Vorschau für «${section}»</div>
+      <div style="font-size:0.75rem;margin-top:0.5rem;">Änderungen werden nach dem Speichern angezeigt</div>
+    </div></body></html>`;
+  }
+
+  frame.srcdoc = html;
+}
+
+// ═══════════════════════════════════════════════
+//  INSTAGRAM SHARE
+// ═══════════════════════════════════════════════
+function shareInstagram() {
+  const title = document.getElementById('news-title-input').value.trim();
+  const text = document.getElementById('news-text').value.trim();
+  const tagList = tags.join(' ');
+  
+  if (!title) { showToast('Bitte zuerst einen Titel eingeben.', true); return; }
+  
+  const caption = `${title}
+
+${text}
+
+${tagList}`;
+  
+  // Copy to clipboard
+  navigator.clipboard.writeText(caption).then(() => {
+    showToast('📋 Text kopiert! Instagram wird geöffnet...');
+    setTimeout(() => {
+      window.open('https://www.instagram.com/', '_blank');
+    }, 1000);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = caption;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('📋 Text kopiert! Instagram wird geöffnet...');
+    setTimeout(() => window.open('https://www.instagram.com/', '_blank'), 1000);
+  });
+}
 </script>
 <style>
   :root {
@@ -255,6 +413,25 @@ function saveJahresplanung() {
 
   /* Main content */
   .main { margin-left:var(--sidebar-w); min-height:100vh; display:flex; flex-direction:column; }
+  .content-wrapper { display:flex; flex:1; gap:0; }
+  .content { flex:1; padding:2rem; max-width:600px; min-width:0; overflow-y:auto; }
+  .preview-pane {
+    width:420px; flex-shrink:0; background:var(--schwarz);
+    border-left:1px solid var(--grau-border); position:sticky; top:0;
+    height:100vh; overflow:hidden; display:flex; flex-direction:column;
+  }
+  .preview-header {
+    background:var(--grau-dunkel); border-bottom:1px solid var(--grau-border);
+    padding:0.75rem 1rem; font-size:0.72rem; font-weight:700; letter-spacing:2px;
+    text-transform:uppercase; color:var(--rot); display:flex; align-items:center; gap:0.5rem;
+    flex-shrink:0;
+  }
+  .preview-frame { flex:1; border:none; width:100%; background:#fff; }
+  .preview-placeholder {
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:var(--weiss-dim); font-size:0.85rem; gap:0.5rem; padding:2rem; text-align:center;
+  }
+  .preview-placeholder .big { font-size:3rem; }
   .topbar {
     background:var(--grau-dunkel); border-bottom:1px solid var(--grau-border);
     padding:1rem 2rem; display:flex; align-items:center; justify-content:space-between;
@@ -448,6 +625,7 @@ function saveJahresplanung() {
       </div>
     </div>
 
+    <div class="content-wrapper">
     <div class="content">
 
       <!-- ── DASHBOARD ── -->
@@ -517,9 +695,12 @@ function saveJahresplanung() {
               <input class="tag-input-inner" id="tag-input" placeholder="#ForzaRossoneri" onkeydown="addTag(event)">
             </div>
           </div>
-          <div style="display:flex;gap:0.75rem;margin-top:0.5rem;">
+          <div style="display:flex;gap:0.75rem;margin-top:0.5rem;flex-wrap:wrap;">
             <button class="btn-primary" onclick="saveNews()">Beitrag speichern</button>
             <button class="btn-cancel" onclick="cancelNews()">Abbrechen</button>
+            <button style="background:#E1306C;color:#fff;border:none;padding:0.6rem 1.25rem;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.5rem;" onclick="shareInstagram()">
+              📸 Auf Instagram teilen
+            </button>
           </div>
         </div>
 
@@ -590,7 +771,7 @@ function saveJahresplanung() {
           <div class="form-group">
             <label>Logo</label>
             <div class="img-picker">
-              <input type="text" id="hero-logo" placeholder="Google Drive Logo-URL">
+              <input type="text" id="hero-logo" oninput="appData.hero.logo=this.value;updatePreview('Hero / Startseite')" placeholder="Google Drive Logo-URL">
               <button class="btn-pick" onclick="openDrivePicker('hero-logo','hero-logo-preview')">📁 Drive</button>
             </div>
             <img id="hero-logo-preview" class="img-preview" style="margin-top:0.5rem;width:80px;height:80px;object-fit:contain;background:var(--grau);">
@@ -598,22 +779,22 @@ function saveJahresplanung() {
           <div class="form-group">
             <label>Hintergrundbild (Hero)</label>
             <div class="img-picker">
-              <input type="text" id="hero-bg" placeholder="Google Drive Hintergrundbild-URL">
+              <input type="text" id="hero-bg" oninput="appData.hero.background=this.value;updatePreview('Hero / Startseite')" placeholder="Google Drive Hintergrundbild-URL">
               <button class="btn-pick" onclick="openDrivePicker('hero-bg','hero-bg-preview')">📁 Drive</button>
             </div>
             <img id="hero-bg-preview" class="img-preview" style="margin-top:0.5rem;width:200px;height:100px;object-fit:cover;">
           </div>
           <div class="form-group">
             <label>Badge-Text (klein über dem Titel)</label>
-            <input type="text" id="hero-badge" placeholder="z.B. Fussballclub · Lausen BL · Seit 1962">
+            <input type="text" id="hero-badge" oninput="appData.hero.badge=this.value;updatePreview('Hero / Startseite')" placeholder="z.B. Fussballclub · Lausen BL · Seit 1962">
           </div>
           <div class="form-group">
             <label>Haupttitel (grosser Text)</label>
-            <input type="text" id="hero-title" placeholder="z.B. AC Rossoneri">
+            <input type="text" id="hero-title" oninput="appData.hero.title=this.value;updatePreview('Hero / Startseite')" placeholder="z.B. AC Rossoneri">
           </div>
           <div class="form-group">
             <label>Untertitel</label>
-            <input type="text" id="hero-sub" placeholder="z.B. Non Mollare · Niemals aufgeben">
+            <input type="text" id="hero-sub" oninput="appData.hero.sub=this.value;updatePreview('Hero / Startseite')" placeholder="z.B. Non Mollare · Niemals aufgeben">
           </div>
           <button class="btn-primary" onclick="saveHero()">Speichern</button>
         </div>
@@ -767,7 +948,7 @@ function saveJahresplanung() {
           </div>
           <div class="form-group">
             <label>Beschreibungstext</label>
-            <textarea id="cantina-text" rows="4" placeholder="Beschreibung der Cantina..."></textarea>
+            <textarea id="cantina-text" oninput="appData.cantina=appData.cantina||{};appData.cantina.text=this.value;updatePreview('La Cantina')" rows="4" placeholder="Beschreibung der Cantina..."></textarea>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -850,6 +1031,22 @@ function saveJahresplanung() {
       </div>
 
     </div><!-- /content -->
+    </div><!-- /content-wrapper -->
+
+    <!-- PREVIEW PANE -->
+    <div class="preview-pane" id="preview-pane">
+      <div class="preview-header">
+        👁 Live-Vorschau
+        <span id="preview-status" style="margin-left:auto;font-size:0.7rem;color:var(--weiss-dim);">Wähle einen Bereich</span>
+      </div>
+      <div class="preview-placeholder" id="preview-placeholder">
+        <div class="big">👁</div>
+        <div>Hier erscheint die Live-Vorschau</div>
+        <div style="font-size:0.75rem;">Bearbeite einen Bereich links um die Vorschau zu sehen</div>
+      </div>
+      <iframe class="preview-frame" id="preview-frame" style="display:none;"></iframe>
+    </div>
+
   </div><!-- /main -->
 </div><!-- /app -->
 
@@ -1270,6 +1467,8 @@ function showPanel(name) {
   document.getElementById('panel-' + name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => { if(n.textContent.trim().includes(panelTitles[name]?.split('/')[0].trim())) n.classList.add('active'); });
   document.getElementById('panel-title').textContent = panelTitles[name] || name;
+  // Update preview
+  updatePreview(panelTitles[name] || name);
 }
 
 function collectCurrentPanel() {
@@ -1776,6 +1975,164 @@ function removeJahresEvent(i) {
 
 function saveJahresplanung() {
   showToast('Jahresplanung gespeichert. Klick «Veröffentlichen» um live zu schalten.');
+}
+
+// ═══════════════════════════════════════════════
+//  LIVE PREVIEW
+// ═══════════════════════════════════════════════
+function updatePreview(section) {
+  const frame = document.getElementById('preview-frame');
+  const placeholder = document.getElementById('preview-placeholder');
+  const status = document.getElementById('preview-status');
+  
+  placeholder.style.display = 'none';
+  frame.style.display = 'block';
+  status.textContent = section;
+
+  const logo = appData.hero?.logo || '';
+  const bg = appData.hero?.background || '';
+  const badge = appData.hero?.badge || 'Fussballclub · Lausen BL · Seit 1962';
+  const title = appData.hero?.title || 'AC Rossoneri';
+  const sub = appData.hero?.sub || 'Non Mollare!';
+  const news = appData.news || [];
+  const vorstand = appData.vorstand || {};
+  const cantina = appData.cantina || {};
+
+  let html = '';
+
+  if (section === 'Hero / Startseite') {
+    html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { font-family:'Arial',sans-serif; background:#0A0A0A; color:#F5F5F5; }
+      .hero {
+        height:100vh; display:flex; align-items:center; justify-content:center;
+        text-align:center; position:relative; overflow:hidden;
+        background-image:url('${bg}'); background-size:cover; background-position:center;
+      }
+      .overlay { position:absolute; inset:0; background:rgba(0,0,0,0.55); }
+      .content { position:relative; z-index:2; padding:2rem; }
+      .logo { width:80px; height:80px; object-fit:contain; margin-bottom:1rem; }
+      .badge { border:1px solid #CC0000; color:#CC0000; font-size:0.65rem; font-weight:700; letter-spacing:3px; text-transform:uppercase; padding:0.3rem 1rem; margin-bottom:1rem; display:inline-block; }
+      .title { font-size:5rem; font-weight:900; line-height:0.9; letter-spacing:4px; text-transform:uppercase; }
+      .accent { color:#CC0000; }
+      .sub { margin-top:1rem; font-size:0.8rem; letter-spacing:4px; text-transform:uppercase; color:rgba(245,245,245,0.65); }
+    </style></head><body>
+    <div class="hero">
+      <div class="overlay"></div>
+      <div class="content">
+        ${logo ? `<img src="${logo}" class="logo" alt="Logo">` : ''}
+        <div class="badge">${badge}</div>
+        <div class="title">AC <span class="accent">Rossoneri</span></div>
+        <div class="sub">${sub}</div>
+      </div>
+    </div></body></html>`;
+  }
+
+  else if (section === 'News & Beiträge') {
+    const cards = news.slice(0,3).map(n => `
+      <div style="background:#1E1E1E;border-top:3px solid #CC0000;padding:1rem;margin-bottom:1rem;">
+        ${n.image ? `<img src="${n.image}" style="width:100%;height:120px;object-fit:cover;margin-bottom:0.75rem;">` : `<div style="width:100%;height:80px;background:#333;display:flex;align-items:center;justify-content:center;color:#666;font-size:0.7rem;margin-bottom:0.75rem;">Kein Bild</div>`}
+        <div style="font-size:0.65rem;color:#CC0000;font-weight:700;letter-spacing:2px;text-transform:uppercase;">${n.label||n.date}</div>
+        <div style="font-weight:700;font-size:0.9rem;margin:0.3rem 0;">${n.title}</div>
+        <div style="font-size:0.75rem;color:rgba(245,245,245,0.65);line-height:1.5;">${(n.text||'').substring(0,100)}...</div>
+      </div>`).join('');
+    html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:Arial,sans-serif; background:#0A0A0A; color:#F5F5F5; padding:1rem; font-size:13px; }</style>
+    </head><body><div style="font-size:0.6rem;color:#CC0000;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:0.5rem;">AKTUELLES</div>
+    <div style="font-size:1.5rem;font-weight:900;margin-bottom:1rem;">NEWS & BERICHTE</div>
+    ${cards || '<p style="color:#666;">Noch keine Beiträge</p>'}
+    </body></html>`;
+  }
+
+  else if (section === 'Vorstand') {
+    const cop = vorstand.coPraesidenten || [];
+    const mitglieder = vorstand.mitglieder || [];
+    html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:Arial,sans-serif; background:#0A0A0A; color:#F5F5F5; padding:1rem; font-size:12px; }</style>
+    </head><body>
+    <div style="font-size:0.6rem;color:#CC0000;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:0.5rem;">VEREIN</div>
+    <div style="font-size:1.5rem;font-weight:900;margin-bottom:1rem;">VORSTAND</div>
+    <div style="display:flex;gap:1rem;margin-bottom:1rem;">
+      ${cop.map(c => `<div style="text-align:center;flex:1;">
+        ${c.bild ? `<img src="${c.bild}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #CC0000;">` : `<div style="width:60px;height:60px;border-radius:50%;background:#333;margin:0 auto;border:2px solid #CC0000;"></div>`}
+        <div style="font-weight:700;font-size:0.8rem;margin-top:0.3rem;">${c.name}</div>
+        <div style="font-size:0.65rem;color:#CC0000;">${c.funktion}</div>
+      </div>`).join('')}
+    </div>
+    ${mitglieder.map(m => `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid #1E1E1E;">
+      <div style="width:6px;height:6px;background:#CC0000;border-radius:50%;flex-shrink:0;"></div>
+      <div style="font-weight:600;flex:1;">${m.name}</div>
+      <div style="color:#CC0000;font-size:0.7rem;">${m.funktion}</div>
+    </div>`).join('')}
+    </body></html>`;
+  }
+
+  else if (section === 'La Cantina') {
+    html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:Arial,sans-serif; background:#0A0A0A; color:#F5F5F5; padding:1rem; font-size:12px; }</style>
+    </head><body>
+    <div style="font-size:0.6rem;color:#CC0000;font-weight:700;letter-spacing:3px;margin-bottom:0.5rem;">CLUBHAUS</div>
+    <div style="font-size:1.5rem;font-weight:900;margin-bottom:0.75rem;">LA CANTINA</div>
+    ${cantina.bild ? `<img src="${cantina.bild}" style="width:100%;height:120px;object-fit:cover;margin-bottom:0.75rem;">` : ''}
+    <div style="color:rgba(245,245,245,0.7);line-height:1.6;font-size:0.8rem;margin-bottom:0.75rem;">${cantina.text||''}</div>
+    <div style="background:#1E1E1E;padding:0.75rem;margin-bottom:0.5rem;">
+      <div style="font-size:0.65rem;color:#CC0000;font-weight:700;letter-spacing:2px;margin-bottom:0.25rem;">VERANTWORTLICHE</div>
+      <div>${cantina.chef1||''} · ${cantina.chef2||''}</div>
+    </div>
+    ${cantina.zeiten ? `<div style="background:#1E1E1E;padding:0.75rem;">
+      <div style="font-size:0.65rem;color:#CC0000;font-weight:700;letter-spacing:2px;margin-bottom:0.25rem;">ÖFFNUNGSZEITEN</div>
+      <div style="white-space:pre-line;">${cantina.zeiten}</div>
+    </div>` : ''}
+    </body></html>`;
+  }
+
+  else {
+    html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>* { margin:0; padding:0; box-sizing:border-box; } body { font-family:Arial,sans-serif; background:#0A0A0A; color:#F5F5F5; padding:2rem; display:flex; align-items:center; justify-content:center; min-height:100vh; }</style>
+    </head><body><div style="text-align:center;color:rgba(245,245,245,0.4);">
+      <div style="font-size:3rem;margin-bottom:1rem;">👁</div>
+      <div>Vorschau für «${section}»</div>
+      <div style="font-size:0.75rem;margin-top:0.5rem;">Änderungen werden nach dem Speichern angezeigt</div>
+    </div></body></html>`;
+  }
+
+  frame.srcdoc = html;
+}
+
+// ═══════════════════════════════════════════════
+//  INSTAGRAM SHARE
+// ═══════════════════════════════════════════════
+function shareInstagram() {
+  const title = document.getElementById('news-title-input').value.trim();
+  const text = document.getElementById('news-text').value.trim();
+  const tagList = tags.join(' ');
+  
+  if (!title) { showToast('Bitte zuerst einen Titel eingeben.', true); return; }
+  
+  const caption = `${title}
+
+${text}
+
+${tagList}`;
+  
+  // Copy to clipboard
+  navigator.clipboard.writeText(caption).then(() => {
+    showToast('📋 Text kopiert! Instagram wird geöffnet...');
+    setTimeout(() => {
+      window.open('https://www.instagram.com/', '_blank');
+    }, 1000);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = caption;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('📋 Text kopiert! Instagram wird geöffnet...');
+    setTimeout(() => window.open('https://www.instagram.com/', '_blank'), 1000);
+  });
 }
 </script>
 </body>
