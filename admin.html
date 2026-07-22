@@ -4,7 +4,185 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AC Rossoneri – Admin Panel</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer>
+// ═══════════════════════════════════════════════
+//  VORSTAND
+// ═══════════════════════════════════════════════
+function renderVorstand() {
+  const v = appData.vorstand || {};
+  const cop = v.coPraesidenten || [];
+  document.getElementById('vst-cop1-name').value = cop[0]?.name || '';
+  document.getElementById('vst-cop1-bild').value = cop[0]?.bild || '';
+  document.getElementById('vst-cop2-name').value = cop[1]?.name || '';
+  document.getElementById('vst-cop2-bild').value = cop[1]?.bild || '';
+  document.getElementById('vst-gruppenfoto').value = v.gruppenfoto || '';
+  if (cop[0]?.bild) { const i=document.getElementById('vst-cop1-img'); i.src=cop[0].bild; i.classList.add('show'); }
+  if (cop[1]?.bild) { const i=document.getElementById('vst-cop2-img'); i.src=cop[1].bild; i.classList.add('show'); }
+  if (v.gruppenfoto) { const i=document.getElementById('vst-gruppen-img'); i.src=v.gruppenfoto; i.classList.add('show'); }
+  renderVorstandList();
+}
+
+function renderVorstandList() {
+  const mitglieder = appData.vorstand?.mitglieder || [];
+  const list = document.getElementById('vorstand-list');
+  list.innerHTML = mitglieder.map((m,i) => `
+    <div class="sponsor-edit-item" style="flex-wrap:wrap;gap:0.5rem;">
+      <input type="text" value="${m.name||''}" placeholder="Name" style="flex:2;" oninput="appData.vorstand.mitglieder[${i}].name=this.value">
+      <input type="text" value="${m.funktion||''}" placeholder="Funktion" style="flex:2;" oninput="appData.vorstand.mitglieder[${i}].funktion=this.value">
+      <input type="text" value="${m.bild||''}" placeholder="Foto URL (Drive)" style="flex:3;" oninput="appData.vorstand.mitglieder[${i}].bild=this.value">
+      <button class="btn-delete" onclick="removeVorstandMitglied(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addVorstandMitglied() {
+  if (!appData.vorstand) appData.vorstand = { coPraesidenten:[], mitglieder:[], gruppenfoto:'' };
+  if (!appData.vorstand.mitglieder) appData.vorstand.mitglieder = [];
+  appData.vorstand.mitglieder.push({ name:'', funktion:'', bild:'' });
+  renderVorstandList();
+}
+
+function removeVorstandMitglied(i) {
+  appData.vorstand.mitglieder.splice(i,1);
+  renderVorstandList();
+}
+
+function saveVorstand() {
+  if (!appData.vorstand) appData.vorstand = { coPraesidenten:[], mitglieder:[], gruppenfoto:'' };
+  appData.vorstand.coPraesidenten = [
+    { name: document.getElementById('vst-cop1-name').value.trim(), funktion:'Co-Präsident', bild: document.getElementById('vst-cop1-bild').value.trim() },
+    { name: document.getElementById('vst-cop2-name').value.trim(), funktion:'Co-Präsident', bild: document.getElementById('vst-cop2-bild').value.trim() }
+  ];
+  appData.vorstand.gruppenfoto = document.getElementById('vst-gruppenfoto').value.trim();
+  showToast('Vorstand gespeichert. Klick «Veröffentlichen» um live zu schalten.');
+}
+
+// ═══════════════════════════════════════════════
+//  CANTINA
+// ═══════════════════════════════════════════════
+function renderCantina() {
+  const c = appData.cantina || {};
+  document.getElementById('cantina-chef1').value = c.chef1 || '';
+  document.getElementById('cantina-chef2').value = c.chef2 || '';
+  document.getElementById('cantina-text').value = c.text || '';
+  document.getElementById('cantina-zeiten').value = c.zeiten || '';
+  document.getElementById('cantina-datum').value = c.datum || '';
+  document.getElementById('cantina-bild').value = c.bild || '';
+  if (c.bild) { const i=document.getElementById('cantina-img'); i.src=c.bild; i.classList.add('show'); }
+}
+
+function saveCantina() {
+  appData.cantina = {
+    chef1: document.getElementById('cantina-chef1').value.trim(),
+    chef2: document.getElementById('cantina-chef2').value.trim(),
+    text: document.getElementById('cantina-text').value.trim(),
+    zeiten: document.getElementById('cantina-zeiten').value.trim(),
+    datum: document.getElementById('cantina-datum').value.trim(),
+    bild: document.getElementById('cantina-bild').value.trim()
+  };
+  showToast('La Cantina gespeichert.');
+}
+
+// ═══════════════════════════════════════════════
+//  GESCHICHTE
+// ═══════════════════════════════════════════════
+function renderGeschichte() {
+  const list = document.getElementById('geschichte-list');
+  const items = appData.geschichte || [];
+  list.innerHTML = items.map((g,i) => `
+    <div class="card" style="margin-bottom:0.75rem;padding:1rem;">
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0.5rem;">
+          <label>Jahr</label>
+          <input type="text" value="${g.jahr||''}" placeholder="z.B. 1962" oninput="appData.geschichte[${i}].jahr=this.value">
+        </div>
+        <div class="form-group" style="margin-bottom:0.5rem;">
+          <label>Titel</label>
+          <input type="text" value="${g.titel||''}" placeholder="z.B. Gründung" oninput="appData.geschichte[${i}].titel=this.value">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0.5rem;">
+        <label>Text</label>
+        <textarea rows="2" oninput="appData.geschichte[${i}].text=this.value">${g.text||''}</textarea>
+      </div>
+      <button class="btn-delete" onclick="removeGeschichte(${i})">🗑 Löschen</button>
+    </div>`).join('');
+}
+
+function addGeschichte() {
+  if (!appData.geschichte) appData.geschichte = [];
+  appData.geschichte.push({ jahr:'', titel:'', text:'' });
+  renderGeschichte();
+}
+
+function removeGeschichte(i) {
+  appData.geschichte.splice(i,1);
+  renderGeschichte();
+}
+
+function saveGeschichte() {
+  showToast('Geschichte gespeichert.');
+}
+
+// ═══════════════════════════════════════════════
+//  STATUTEN
+// ═══════════════════════════════════════════════
+function renderStatuten() {
+  const s = appData.statuten || {};
+  document.getElementById('statuten-name').value = s.name || '';
+  document.getElementById('statuten-gruendung').value = s.gruendung || '';
+  document.getElementById('statuten-sitz').value = s.sitz || '';
+  document.getElementById('statuten-mitglied').value = s.mitglied || '';
+  document.getElementById('statuten-organe').value = s.organe || '';
+  document.getElementById('statuten-gv').value = s.gv || '';
+}
+
+function saveStatuten() {
+  appData.statuten = {
+    name: document.getElementById('statuten-name').value.trim(),
+    gruendung: document.getElementById('statuten-gruendung').value.trim(),
+    sitz: document.getElementById('statuten-sitz').value.trim(),
+    mitglied: document.getElementById('statuten-mitglied').value.trim(),
+    organe: document.getElementById('statuten-organe').value.trim(),
+    gv: document.getElementById('statuten-gv').value.trim()
+  };
+  showToast('Statuten gespeichert.');
+}
+
+// ═══════════════════════════════════════════════
+//  JAHRESPLANUNG
+// ═══════════════════════════════════════════════
+function renderJahresplanung() {
+  const list = document.getElementById('jahres-list');
+  const items = appData.jahresplanung || [];
+  list.innerHTML = items.map((e,i) => `
+    <div class="sponsor-edit-item" style="flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem;">
+      <input type="text" value="${e.datum||''}" placeholder="Datum (z.B. 12.12.2026)" style="flex:2;" oninput="appData.jahresplanung[${i}].datum=this.value">
+      <input type="text" value="${e.titel||''}" placeholder="Beschreibung" style="flex:3;" oninput="appData.jahresplanung[${i}].titel=this.value">
+      <select style="background:var(--schwarz);border:1px solid var(--grau-hell);color:var(--weiss);padding:0.4rem;" onchange="appData.jahresplanung[${i}].typ=this.value">
+        <option value="sitzung" ${e.typ==='sitzung'?'selected':''}>Vorstandssitzung</option>
+        <option value="event" ${e.typ==='event'?'selected':''}>Vereinsanlass</option>
+        <option value="turnier" ${e.typ==='turnier'?'selected':''}>Turnier</option>
+        <option value="gv" ${e.typ==='gv'?'selected':''}>Generalversammlung</option>
+      </select>
+      <button class="btn-delete" onclick="removeJahresEvent(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addJahresEvent() {
+  if (!appData.jahresplanung) appData.jahresplanung = [];
+  appData.jahresplanung.push({ datum:'', titel:'', typ:'sitzung' });
+  renderJahresplanung();
+}
+
+function removeJahresEvent(i) {
+  appData.jahresplanung.splice(i,1);
+  renderJahresplanung();
+}
+
+function saveJahresplanung() {
+  showToast('Jahresplanung gespeichert. Klick «Veröffentlichen» um live zu schalten.');
+}
+</script>
 <style>
   :root {
     --rot: #CC0000;
@@ -237,9 +415,16 @@
       <div class="nav-item" onclick="showPanel('mannschaften')"><span class="icon">⚽</span> Mannschaften</div>
       <div class="nav-item" onclick="showPanel('sponsoren')"><span class="icon">🤝</span> Sponsoren</div>
 
+      <div class="nav-section">Verein</div>
+      <div class="nav-item" onclick="showPanel('vorstand')"><span class="icon">👥</span> Vorstand</div>
+      <div class="nav-item" onclick="showPanel('cantina')"><span class="icon">🍕</span> La Cantina</div>
+      <div class="nav-item" onclick="showPanel('geschichte')"><span class="icon">📖</span> Geschichte</div>
+      <div class="nav-item" onclick="showPanel('statuten')"><span class="icon">📋</span> Statuten</div>
+
       <div class="nav-section">Seiten</div>
       <div class="nav-item" onclick="showPanel('hero')"><span class="icon">🏠</span> Startseite / Hero</div>
       <div class="nav-item" onclick="showPanel('visam')"><span class="icon">🏆</span> Visam Cup</div>
+      <div class="nav-item" onclick="showPanel('jahresplanung')"><span class="icon">📅</span> Jahresplanung</div>
       <div class="nav-item" onclick="showPanel('kontakt')"><span class="icon">📍</span> Kontakt</div>
     </nav>
     <div class="sidebar-footer">
@@ -375,6 +560,15 @@
             </div>
             <img id="mann-img-preview" class="img-preview" style="margin-top:0.5rem;width:80px;height:80px;object-fit:cover;">
           </div>
+          <div class="form-group">
+            <label>Mannschafts-Foto (Teambild)</label>
+            <div class="img-picker">
+              <input type="text" id="mann-team-bild" placeholder="Google Drive Bild-URL">
+              <button class="btn-pick" onclick="openDrivePicker('mann-team-bild','mann-team-img-preview')">📁 Drive</button>
+            </div>
+            <img id="mann-team-img-preview" class="img-preview" style="margin-top:0.5rem;width:200px;height:100px;object-fit:cover;">
+            <div class="form-hint">Dieses Bild erscheint als Hauptbild der Mannschaftsseite</div>
+          </div>
           <button class="btn-primary" onclick="saveMannschaft()">Speichern</button>
         </div>
       </div>
@@ -393,6 +587,22 @@
       <div class="panel" id="panel-hero">
         <div class="card">
           <div class="card-title">Startseite / Hero-Bereich</div>
+          <div class="form-group">
+            <label>Logo</label>
+            <div class="img-picker">
+              <input type="text" id="hero-logo" placeholder="Google Drive Logo-URL">
+              <button class="btn-pick" onclick="openDrivePicker('hero-logo','hero-logo-preview')">📁 Drive</button>
+            </div>
+            <img id="hero-logo-preview" class="img-preview" style="margin-top:0.5rem;width:80px;height:80px;object-fit:contain;background:var(--grau);">
+          </div>
+          <div class="form-group">
+            <label>Hintergrundbild (Hero)</label>
+            <div class="img-picker">
+              <input type="text" id="hero-bg" placeholder="Google Drive Hintergrundbild-URL">
+              <button class="btn-pick" onclick="openDrivePicker('hero-bg','hero-bg-preview')">📁 Drive</button>
+            </div>
+            <img id="hero-bg-preview" class="img-preview" style="margin-top:0.5rem;width:200px;height:100px;object-fit:cover;">
+          </div>
           <div class="form-group">
             <label>Badge-Text (klein über dem Titel)</label>
             <input type="text" id="hero-badge" placeholder="z.B. Fussballclub · Lausen BL · Seit 1962">
@@ -483,6 +693,162 @@
         </div>
       </div>
 
+
+      <!-- ── VORSTAND ── -->
+      <div class="panel" id="panel-vorstand">
+        <div class="card">
+          <div class="card-title">Co-Präsidenten</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Co-Präsident 1 – Name</label>
+              <input type="text" id="vst-cop1-name" placeholder="z.B. Andrea Mulas">
+            </div>
+            <div class="form-group">
+              <label>Co-Präsident 1 – Foto</label>
+              <div class="img-picker">
+                <input type="text" id="vst-cop1-bild" placeholder="Google Drive URL">
+                <button class="btn-pick" onclick="openDrivePicker('vst-cop1-bild','vst-cop1-img')">📁</button>
+              </div>
+              <img id="vst-cop1-img" class="img-preview" style="margin-top:0.5rem;width:80px;height:80px;object-fit:cover;">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Co-Präsident 2 – Name</label>
+              <input type="text" id="vst-cop2-name" placeholder="z.B. Luca Mulas">
+            </div>
+            <div class="form-group">
+              <label>Co-Präsident 2 – Foto</label>
+              <div class="img-picker">
+                <input type="text" id="vst-cop2-bild" placeholder="Google Drive URL">
+                <button class="btn-pick" onclick="openDrivePicker('vst-cop2-bild','vst-cop2-img')">📁</button>
+              </div>
+              <img id="vst-cop2-img" class="img-preview" style="margin-top:0.5rem;width:80px;height:80px;object-fit:cover;">
+            </div>
+          </div>
+          <button class="btn-primary" onclick="saveVorstand()">Speichern</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Vorstandsmitglieder</div>
+          <p style="font-size:0.85rem;color:var(--weiss-dim);margin-bottom:1rem;">Name, Funktion und Foto jedes Vorstandsmitglieds eintragen.</p>
+          <div id="vorstand-list"></div>
+          <button class="btn-new" style="margin-top:1rem;" onclick="addVorstandMitglied()">+ Mitglied hinzufügen</button>
+          <div style="margin-top:1rem;">
+            <button class="btn-primary" onclick="saveVorstand()">Alle speichern</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Vorstand Gruppenfoto</div>
+          <div class="form-group">
+            <label>Gruppenfoto aller Vorstandsmitglieder</label>
+            <div class="img-picker">
+              <input type="text" id="vst-gruppenfoto" placeholder="Google Drive URL">
+              <button class="btn-pick" onclick="openDrivePicker('vst-gruppenfoto','vst-gruppen-img')">📁 Drive</button>
+            </div>
+            <img id="vst-gruppen-img" class="img-preview" style="margin-top:0.5rem;width:300px;height:150px;object-fit:cover;">
+          </div>
+          <button class="btn-primary" onclick="saveVorstand()">Speichern</button>
+        </div>
+      </div>
+
+      <!-- ── CANTINA ── -->
+      <div class="panel" id="panel-cantina">
+        <div class="card">
+          <div class="card-title">La Cantina – Informationen</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Verantwortlicher 1</label>
+              <input type="text" id="cantina-chef1" placeholder="z.B. Pasquale Di Maio">
+            </div>
+            <div class="form-group">
+              <label>Verantwortlicher 2</label>
+              <input type="text" id="cantina-chef2" placeholder="z.B. Fernando Cerejeira">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Beschreibungstext</label>
+            <textarea id="cantina-text" rows="4" placeholder="Beschreibung der Cantina..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Öffnungszeiten</label>
+              <textarea id="cantina-zeiten" rows="3" placeholder="z.B. Fr ab 18:00 Uhr&#10;Sa ab 16:00 Uhr"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Eröffnungsdatum</label>
+              <input type="text" id="cantina-datum" placeholder="z.B. 18. Juni 2022">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Foto La Cantina</label>
+            <div class="img-picker">
+              <input type="text" id="cantina-bild" placeholder="Google Drive URL">
+              <button class="btn-pick" onclick="openDrivePicker('cantina-bild','cantina-img')">📁 Drive</button>
+            </div>
+            <img id="cantina-img" class="img-preview" style="margin-top:0.5rem;width:200px;height:120px;object-fit:cover;">
+          </div>
+          <button class="btn-primary" onclick="saveCantina()">Speichern</button>
+        </div>
+      </div>
+
+      <!-- ── GESCHICHTE ── -->
+      <div class="panel" id="panel-geschichte">
+        <div class="card">
+          <div class="card-title">Vereinsgeschichte</div>
+          <p style="font-size:0.85rem;color:var(--weiss-dim);margin-bottom:1rem;">Wichtige Meilensteine in der Geschichte des AC Rossoneri.</p>
+          <div id="geschichte-list"></div>
+          <button class="btn-new" style="margin-top:1rem;" onclick="addGeschichte()">+ Meilenstein hinzufügen</button>
+          <div style="margin-top:1rem;">
+            <button class="btn-primary" onclick="saveGeschichte()">Alle speichern</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STATUTEN ── -->
+      <div class="panel" id="panel-statuten">
+        <div class="card">
+          <div class="card-title">Statuten</div>
+          <div class="form-group">
+            <label>Vereinsname</label>
+            <input type="text" id="statuten-name" placeholder="z.B. AC Rossoneri Lausen">
+          </div>
+          <div class="form-group">
+            <label>Gründungsjahr</label>
+            <input type="text" id="statuten-gruendung" placeholder="z.B. 1962">
+          </div>
+          <div class="form-group">
+            <label>Vereinssitz</label>
+            <input type="text" id="statuten-sitz" placeholder="z.B. Lausen BL">
+          </div>
+          <div class="form-group">
+            <label>Mitgliedschaft (Text)</label>
+            <textarea id="statuten-mitglied" rows="3" placeholder="Wer kann Mitglied werden..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Organe des Vereins</label>
+            <textarea id="statuten-organe" rows="3" placeholder="Die Organe des Vereins sind..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Generalversammlung (Text)</label>
+            <textarea id="statuten-gv" rows="3" placeholder="Die ordentliche Generalversammlung..."></textarea>
+          </div>
+          <button class="btn-primary" onclick="saveStatuten()">Speichern</button>
+        </div>
+      </div>
+
+      <!-- ── JAHRESPLANUNG ── -->
+      <div class="panel" id="panel-jahresplanung">
+        <div class="card">
+          <div class="card-title">Jahresplanung & Events</div>
+          <p style="font-size:0.85rem;color:var(--weiss-dim);margin-bottom:1rem;">Alle Termine und Events der Saison verwalten.</p>
+          <div id="jahres-list"></div>
+          <button class="btn-new" style="margin-top:1rem;" onclick="addJahresEvent()">+ Termin hinzufügen</button>
+          <div style="margin-top:1rem;">
+            <button class="btn-primary" onclick="saveJahresplanung()">Alle speichern</button>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
@@ -497,6 +863,7 @@
 const CLIENT_ID = '978941076047-27v0p73d1epmd7m8jc0056rfiensjf01.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 const DRIVE_FILE_NAME = 'acrossoneri_content.json';
+const KNOWN_FILE_ID = '1nkAIzf_t2bZPU02jGeuxA5IvHPTAUAac';
 
 let accessToken = null;
 let driveFileId = null;
@@ -516,6 +883,8 @@ return {
     "publishedBy": "andreadanilo.mulas@gmail.com"
   },
   "hero": {
+    "logo": "https://drive.google.com/uc?export=view&id=1AVpJV2r7AoI_nbByY0MR8U3p3KoR2T5I",
+    "background": "https://drive.google.com/uc?export=view&id=1N1XoPw07XjntuwYvZ-PFZQfhJh5UshZX",
     "badge": "Fussballclub · Lausen BL · Seit 1962",
     "title": "AC Rossoneri",
     "sub": "Non Mollare! · Lausen BL · Seit 1962"
@@ -651,6 +1020,47 @@ return {
     "teams": "FC Basel, Atalanta Bergamo, Barça Academy Zurich",
     "bild": ""
   },
+  "vorstand": {
+    "coPraesidenten": [
+      {"name": "Andrea Mulas", "funktion": "Co-Präsident", "bild": ""},
+      {"name": "Luca Mulas", "funktion": "Co-Präsident", "bild": ""}
+    ],
+    "mitglieder": [
+      {"name": "Özgün Bozkurt", "funktion": "Sportchef", "bild": ""},
+      {"name": "Filippo Presti", "funktion": "Sponsoring", "bild": ""},
+      {"name": "Laura Molteni", "funktion": "Sekretariat", "bild": ""},
+      {"name": "Stefania Mulas", "funktion": "Marketing", "bild": ""},
+      {"name": "Luca Rossi", "funktion": "Events", "bild": ""},
+      {"name": "Alessandro Roberti", "funktion": "Leiter Junioren", "bild": ""},
+      {"name": "Gaetano Ciraolo", "funktion": "Verantwortlicher Clubhaus", "bild": ""}
+    ],
+    "gruppenfoto": ""
+  },
+  "cantina": {
+    "chef1": "Pasquale Di Maio",
+    "chef2": "Fernando Cerejeira",
+    "text": "Nur 16 Monate später öffnete das imposante Clubhaus des AC Rossoneri seine Türen – am 18. Juni 2022 fand die feierliche Neueröffnung statt. La Cantina erstrahlt im vollen Glanz und begrüsst seither unsere Mitglieder, Gäste und Freunde des Vereins.",
+    "zeiten": "Nach den Spielen und Trainings",
+    "datum": "18. Juni 2022",
+    "bild": ""
+  },
+  "geschichte": [
+    {"jahr": "1962", "titel": "Gründung", "text": "Der AC Rossoneri wird in Lausen BL gegründet."},
+    {"jahr": "2022", "titel": "Neueröffnung La Cantina", "text": "Am 18. Juni 2022 feierte der AC Rossoneri einen historischen Meilenstein – die Neueröffnung des Clubhauses."}
+  ],
+  "statuten": {
+    "name": "AC Rossoneri Lausen",
+    "gruendung": "1962",
+    "sitz": "Lausen BL",
+    "mitglied": "Mitglied kann jede natürliche Person werden. Die Aufnahme erfolgt durch den Vorstand. Der Jahresbeitrag wird an der Generalversammlung festgelegt.",
+    "organe": "Die Organe des Vereins sind: die Generalversammlung, der Vorstand und die Kontrollstelle.",
+    "gv": "Die ordentliche Generalversammlung findet jährlich statt. Sie ist das oberste Organ des Vereins und wählt den Vorstand."
+  },
+  "jahresplanung": [
+    {"datum": "13.–14.06.2026", "titel": "VISAM Sport Liestal Cup", "typ": "event"},
+    {"datum": "12.12.2026", "titel": "Weihnachtsmarkt Lausen", "typ": "event"},
+    {"datum": "Mo, 07.12.2026", "titel": "Vorstandssitzung", "typ": "sitzung"}
+  ],
   "kontakt": {
     "strasse": "Schelligackerweg 4",
     "ort": "4415 Lausen",
@@ -718,6 +1128,11 @@ function renderAll() {
   renderHero();
   renderVisam();
   renderKontakt();
+  renderVorstand();
+  renderCantina();
+  renderGeschichte();
+  renderStatuten();
+  renderJahresplanung();
   updateStats();
 }
 
@@ -737,18 +1152,25 @@ async function driveRequest(url, method='GET', body=null) {
 
 async function loadFromDrive() {
   try {
+    // Use known file ID if available
+    if (KNOWN_FILE_ID) driveFileId = KNOWN_FILE_ID;
     // Search for the file
     const search = await driveRequest(
       `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}'&spaces=drive&fields=files(id,name,modifiedTime)`
     );
-    if (search.files && search.files.length > 0) {
-      driveFileId = search.files[0].id;
+    if (driveFileId || (search.files && search.files.length > 0)) {
+      driveFileId = driveFileId || search.files[0].id;
       const content = await fetch(
         `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
         { headers: { Authorization: 'Bearer ' + accessToken } }
       );
       const json = await content.json();
-      appData = { ...getDefaultData(), ...json };
+      const defaults = getDefaultData();
+      appData = { ...defaults, ...json };
+      // Keep default news if Drive has none
+      if (!appData.news || appData.news.length === 0) {
+        appData.news = defaults.news;
+      }
       const modTime = new Date(search.files[0].modifiedTime).toLocaleString('de-CH');
       document.getElementById('last-published').textContent = 'Zuletzt gespeichert: ' + modTime;
       document.getElementById('drive-info').textContent = '✅ Datei gefunden: ' + DRIVE_FILE_NAME + ' (ID: ' + driveFileId.substring(0,12) + '...)';
@@ -835,6 +1257,8 @@ function saveDraft() {
 //  NAVIGATION
 // ═══════════════════════════════════════════════
 const panelTitles = {
+  vorstand:'Vorstand', cantina:'La Cantina', geschichte:'Geschichte',
+  statuten:'Statuten', jahresplanung:'Jahresplanung',
   dashboard:'Dashboard', news:'News & Beiträge', mannschaften:'Mannschaften',
   sponsoren:'Sponsoren', hero:'Startseite / Hero', visam:'Visam Cup', kontakt:'Kontakt'
 };
@@ -871,6 +1295,9 @@ function collectCurrentPanel() {
     appData.visamCup.teams = g('visam-teams');
     appData.visamCup.bild = g('visam-bild');
   }
+  if(document.getElementById('panel-cantina').classList.contains('active')) { saveCantina(); }
+  if(document.getElementById('panel-statuten').classList.contains('active')) { saveStatuten(); }
+  if(document.getElementById('panel-vorstand').classList.contains('active')) { saveVorstand(); }
 }
 
 // ═══════════════════════════════════════════════
@@ -1009,8 +1436,11 @@ function renderMannschaft(key) {
   document.getElementById('mann-training').value = m.training || '';
   document.getElementById('mann-ort').value = m.ort || '';
   document.getElementById('mann-trainer-bild').value = m.trainerBild || '';
+  document.getElementById('mann-team-bild').value = m.teamBild || '';
   const img = document.getElementById('mann-img-preview');
   if (m.trainerBild) { img.src = m.trainerBild; img.classList.add('show'); } else { img.classList.remove('show'); }
+  const timg = document.getElementById('mann-team-img-preview');
+  if (m.teamBild) { timg.src = m.teamBild; timg.classList.add('show'); } else { timg.classList.remove('show'); }
 }
 
 function saveMannschaft() {
@@ -1020,7 +1450,8 @@ function saveMannschaft() {
     assistent: document.getElementById('mann-assistent').value.trim(),
     training: document.getElementById('mann-training').value.trim(),
     ort: document.getElementById('mann-ort').value.trim(),
-    trainerBild: document.getElementById('mann-trainer-bild').value.trim()
+    trainerBild: document.getElementById('mann-trainer-bild').value.trim(),
+    teamBild: document.getElementById('mann-team-bild').value.trim()
   };
   showToast('Mannschaft gespeichert. Klick «Veröffentlichen» um live zu schalten.');
 }
@@ -1053,13 +1484,19 @@ function removeSponsor(i) {
 //  HERO / ABOUT
 // ═══════════════════════════════════════════════
 function renderHero() {
+  document.getElementById('hero-logo').value = appData.hero.logo || '';
+  document.getElementById('hero-bg').value = appData.hero.background || '';
   document.getElementById('hero-badge').value = appData.hero.badge || '';
   document.getElementById('hero-title').value = appData.hero.title || '';
   document.getElementById('hero-sub').value = appData.hero.sub || '';
   document.getElementById('about-text').value = appData.about.text || '';
+  if (appData.hero.logo) { const i=document.getElementById('hero-logo-preview'); i.src=appData.hero.logo; i.classList.add('show'); }
+  if (appData.hero.background) { const i=document.getElementById('hero-bg-preview'); i.src=appData.hero.background; i.classList.add('show'); }
 }
 
 function saveHero() {
+  appData.hero.logo = document.getElementById('hero-logo').value.trim();
+  appData.hero.background = document.getElementById('hero-bg').value.trim();
   appData.hero.badge = document.getElementById('hero-badge').value.trim();
   appData.hero.title = document.getElementById('hero-title').value.trim();
   appData.hero.sub = document.getElementById('hero-sub').value.trim();
@@ -1161,6 +1598,184 @@ function showToast(msg, isError=false) {
 function showError(msg) {
   const el = document.getElementById('login-error');
   el.textContent = msg; el.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════
+//  VORSTAND
+// ═══════════════════════════════════════════════
+function renderVorstand() {
+  const v = appData.vorstand || {};
+  const cop = v.coPraesidenten || [];
+  document.getElementById('vst-cop1-name').value = cop[0]?.name || '';
+  document.getElementById('vst-cop1-bild').value = cop[0]?.bild || '';
+  document.getElementById('vst-cop2-name').value = cop[1]?.name || '';
+  document.getElementById('vst-cop2-bild').value = cop[1]?.bild || '';
+  document.getElementById('vst-gruppenfoto').value = v.gruppenfoto || '';
+  if (cop[0]?.bild) { const i=document.getElementById('vst-cop1-img'); i.src=cop[0].bild; i.classList.add('show'); }
+  if (cop[1]?.bild) { const i=document.getElementById('vst-cop2-img'); i.src=cop[1].bild; i.classList.add('show'); }
+  if (v.gruppenfoto) { const i=document.getElementById('vst-gruppen-img'); i.src=v.gruppenfoto; i.classList.add('show'); }
+  renderVorstandList();
+}
+
+function renderVorstandList() {
+  const mitglieder = appData.vorstand?.mitglieder || [];
+  const list = document.getElementById('vorstand-list');
+  list.innerHTML = mitglieder.map((m,i) => `
+    <div class="sponsor-edit-item" style="flex-wrap:wrap;gap:0.5rem;">
+      <input type="text" value="${m.name||''}" placeholder="Name" style="flex:2;" oninput="appData.vorstand.mitglieder[${i}].name=this.value">
+      <input type="text" value="${m.funktion||''}" placeholder="Funktion" style="flex:2;" oninput="appData.vorstand.mitglieder[${i}].funktion=this.value">
+      <input type="text" value="${m.bild||''}" placeholder="Foto URL (Drive)" style="flex:3;" oninput="appData.vorstand.mitglieder[${i}].bild=this.value">
+      <button class="btn-delete" onclick="removeVorstandMitglied(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addVorstandMitglied() {
+  if (!appData.vorstand) appData.vorstand = { coPraesidenten:[], mitglieder:[], gruppenfoto:'' };
+  if (!appData.vorstand.mitglieder) appData.vorstand.mitglieder = [];
+  appData.vorstand.mitglieder.push({ name:'', funktion:'', bild:'' });
+  renderVorstandList();
+}
+
+function removeVorstandMitglied(i) {
+  appData.vorstand.mitglieder.splice(i,1);
+  renderVorstandList();
+}
+
+function saveVorstand() {
+  if (!appData.vorstand) appData.vorstand = { coPraesidenten:[], mitglieder:[], gruppenfoto:'' };
+  appData.vorstand.coPraesidenten = [
+    { name: document.getElementById('vst-cop1-name').value.trim(), funktion:'Co-Präsident', bild: document.getElementById('vst-cop1-bild').value.trim() },
+    { name: document.getElementById('vst-cop2-name').value.trim(), funktion:'Co-Präsident', bild: document.getElementById('vst-cop2-bild').value.trim() }
+  ];
+  appData.vorstand.gruppenfoto = document.getElementById('vst-gruppenfoto').value.trim();
+  showToast('Vorstand gespeichert. Klick «Veröffentlichen» um live zu schalten.');
+}
+
+// ═══════════════════════════════════════════════
+//  CANTINA
+// ═══════════════════════════════════════════════
+function renderCantina() {
+  const c = appData.cantina || {};
+  document.getElementById('cantina-chef1').value = c.chef1 || '';
+  document.getElementById('cantina-chef2').value = c.chef2 || '';
+  document.getElementById('cantina-text').value = c.text || '';
+  document.getElementById('cantina-zeiten').value = c.zeiten || '';
+  document.getElementById('cantina-datum').value = c.datum || '';
+  document.getElementById('cantina-bild').value = c.bild || '';
+  if (c.bild) { const i=document.getElementById('cantina-img'); i.src=c.bild; i.classList.add('show'); }
+}
+
+function saveCantina() {
+  appData.cantina = {
+    chef1: document.getElementById('cantina-chef1').value.trim(),
+    chef2: document.getElementById('cantina-chef2').value.trim(),
+    text: document.getElementById('cantina-text').value.trim(),
+    zeiten: document.getElementById('cantina-zeiten').value.trim(),
+    datum: document.getElementById('cantina-datum').value.trim(),
+    bild: document.getElementById('cantina-bild').value.trim()
+  };
+  showToast('La Cantina gespeichert.');
+}
+
+// ═══════════════════════════════════════════════
+//  GESCHICHTE
+// ═══════════════════════════════════════════════
+function renderGeschichte() {
+  const list = document.getElementById('geschichte-list');
+  const items = appData.geschichte || [];
+  list.innerHTML = items.map((g,i) => `
+    <div class="card" style="margin-bottom:0.75rem;padding:1rem;">
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0.5rem;">
+          <label>Jahr</label>
+          <input type="text" value="${g.jahr||''}" placeholder="z.B. 1962" oninput="appData.geschichte[${i}].jahr=this.value">
+        </div>
+        <div class="form-group" style="margin-bottom:0.5rem;">
+          <label>Titel</label>
+          <input type="text" value="${g.titel||''}" placeholder="z.B. Gründung" oninput="appData.geschichte[${i}].titel=this.value">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0.5rem;">
+        <label>Text</label>
+        <textarea rows="2" oninput="appData.geschichte[${i}].text=this.value">${g.text||''}</textarea>
+      </div>
+      <button class="btn-delete" onclick="removeGeschichte(${i})">🗑 Löschen</button>
+    </div>`).join('');
+}
+
+function addGeschichte() {
+  if (!appData.geschichte) appData.geschichte = [];
+  appData.geschichte.push({ jahr:'', titel:'', text:'' });
+  renderGeschichte();
+}
+
+function removeGeschichte(i) {
+  appData.geschichte.splice(i,1);
+  renderGeschichte();
+}
+
+function saveGeschichte() {
+  showToast('Geschichte gespeichert.');
+}
+
+// ═══════════════════════════════════════════════
+//  STATUTEN
+// ═══════════════════════════════════════════════
+function renderStatuten() {
+  const s = appData.statuten || {};
+  document.getElementById('statuten-name').value = s.name || '';
+  document.getElementById('statuten-gruendung').value = s.gruendung || '';
+  document.getElementById('statuten-sitz').value = s.sitz || '';
+  document.getElementById('statuten-mitglied').value = s.mitglied || '';
+  document.getElementById('statuten-organe').value = s.organe || '';
+  document.getElementById('statuten-gv').value = s.gv || '';
+}
+
+function saveStatuten() {
+  appData.statuten = {
+    name: document.getElementById('statuten-name').value.trim(),
+    gruendung: document.getElementById('statuten-gruendung').value.trim(),
+    sitz: document.getElementById('statuten-sitz').value.trim(),
+    mitglied: document.getElementById('statuten-mitglied').value.trim(),
+    organe: document.getElementById('statuten-organe').value.trim(),
+    gv: document.getElementById('statuten-gv').value.trim()
+  };
+  showToast('Statuten gespeichert.');
+}
+
+// ═══════════════════════════════════════════════
+//  JAHRESPLANUNG
+// ═══════════════════════════════════════════════
+function renderJahresplanung() {
+  const list = document.getElementById('jahres-list');
+  const items = appData.jahresplanung || [];
+  list.innerHTML = items.map((e,i) => `
+    <div class="sponsor-edit-item" style="flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem;">
+      <input type="text" value="${e.datum||''}" placeholder="Datum (z.B. 12.12.2026)" style="flex:2;" oninput="appData.jahresplanung[${i}].datum=this.value">
+      <input type="text" value="${e.titel||''}" placeholder="Beschreibung" style="flex:3;" oninput="appData.jahresplanung[${i}].titel=this.value">
+      <select style="background:var(--schwarz);border:1px solid var(--grau-hell);color:var(--weiss);padding:0.4rem;" onchange="appData.jahresplanung[${i}].typ=this.value">
+        <option value="sitzung" ${e.typ==='sitzung'?'selected':''}>Vorstandssitzung</option>
+        <option value="event" ${e.typ==='event'?'selected':''}>Vereinsanlass</option>
+        <option value="turnier" ${e.typ==='turnier'?'selected':''}>Turnier</option>
+        <option value="gv" ${e.typ==='gv'?'selected':''}>Generalversammlung</option>
+      </select>
+      <button class="btn-delete" onclick="removeJahresEvent(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addJahresEvent() {
+  if (!appData.jahresplanung) appData.jahresplanung = [];
+  appData.jahresplanung.push({ datum:'', titel:'', typ:'sitzung' });
+  renderJahresplanung();
+}
+
+function removeJahresEvent(i) {
+  appData.jahresplanung.splice(i,1);
+  renderJahresplanung();
+}
+
+function saveJahresplanung() {
+  showToast('Jahresplanung gespeichert. Klick «Veröffentlichen» um live zu schalten.');
 }
 </script>
 </body>
