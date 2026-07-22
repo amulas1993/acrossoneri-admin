@@ -1060,7 +1060,7 @@ ${tagList}`;
 const CLIENT_ID = '978941076047-27v0p73d1epmd7m8jc0056rfiensjf01.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 const DRIVE_FILE_NAME = 'acrossoneri_content.json';
-const KNOWN_FILE_ID = '1nkAIzf_t2bZPU02jGeuxA5IvHPTAUAac';
+const KNOWN_FILE_ID = null; // Will search Drive for the file
 
 let accessToken = null;
 let driveFileId = null;
@@ -1349,77 +1349,107 @@ async function driveRequest(url, method='GET', body=null) {
 
 async function loadFromDrive() {
   try {
-    // Use known file ID if available
-    if (KNOWN_FILE_ID) driveFileId = KNOWN_FILE_ID;
-    // Search for the file
-    const search = await driveRequest(
-      `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}'&spaces=drive&fields=files(id,name,modifiedTime)`
+    // Search for existing file in Drive
+    const search = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name%3D'${DRIVE_FILE_NAME}'%20and%20trashed%3Dfalse&fields=files(id,name,modifiedTime)&spaces=drive`,
+      { headers: { Authorization: 'Bearer ' + accessToken } }
     );
-    if (driveFileId || (search.files && search.files.length > 0)) {
-      driveFileId = driveFileId || search.files[0].id;
-      const content = await fetch(
+    const searchData = await search.json();
+    
+    if (searchData.files && searchData.files.length > 0) {
+      driveFileId = searchData.files[0].id;
+      
+      // Load file content
+      const fileResp = await fetch(
         `https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
         { headers: { Authorization: 'Bearer ' + accessToken } }
       );
-      const json = await content.json();
-      const defaults = getDefaultData();
-      appData = { ...defaults, ...json };
-      // Keep default news if Drive has none
-      if (!appData.news || appData.news.length === 0) {
-        appData.news = defaults.news;
+      
+      if (fileResp.ok) {
+        const json = await fileResp.json();
+        const defaults = getDefaultData();
+        appData = { ...defaults, ...json };
+        if (!appData.news || appData.news.length === 0) appData.news = defaults.news;
+        if (!appData.vorstand) appData.vorstand = defaults.vorstand;
+        if (!appData.cantina) appData.cantina = defaults.cantina;
+        
+        const modTime = new Date(searchData.files[0].modifiedTime).toLocaleString('de-CH');
+        document.getElementById('last-published').textContent = 'Zuletzt gespeichert: ' + modTime;
+        document.getElementById('drive-info').textContent = '✅ Verbunden: ' + DRIVE_FILE_NAME + ' (ID: ' + driveFileId.substring(0,10) + '...)';
+        setDriveStatus('Verbunden', true);
+        return;
       }
-      const modTime = new Date(search.files[0].modifiedTime).toLocaleString('de-CH');
-      document.getElementById('last-published').textContent = 'Zuletzt gespeichert: ' + modTime;
-      document.getElementById('drive-info').textContent = '✅ Datei gefunden: ' + DRIVE_FILE_NAME + ' (ID: ' + driveFileId.substring(0,12) + '...)';
-      setDriveStatus('Verbunden', true);
-    } else {
-      document.getElementById('drive-info').textContent = '⚠️ Noch keine Datei in Drive. Beim ersten Veröffentlichen wird sie erstellt.';
-      document.getElementById('last-published').textContent = 'Noch nie veröffentlicht';
-      setDriveStatus('Bereit (neue Datei)', true);
     }
+    
+    // No file found - will create on publish
+    document.getElementById('drive-info').textContent = '⚠️ Noch keine Datei in Drive. Klick «Veröffentlichen» um sie zu erstellen.';
+    document.getElementById('last-published').textContent = 'Noch nie veröffentlicht';
+    setDriveStatus('Bereit', true);
+    
   } catch(e) {
-    console.error(e);
-    setDriveStatus('Fehler', false);
-    document.getElementById('drive-info').textContent = '❌ Fehler beim Laden aus Drive. Lokaler Entwurf wird verwendet.';
+    console.error('Drive load error:', e);
+    const draft = localStorage.getItem('acr_draft');
+    if (draft) {
+      try { 
+        const parsed = JSON.parse(draft);
+        appData = { ...getDefaultData(), ...parsed };
+        document.getElementById('drive-info').textContent = '⚠️ Lokaler Entwurf geladen.';
+        setDriveStatus('Lokal', true);
+        return;
+      } catch(e2) {}
+    }
+    document.getElementById('drive-info').textContent = '⚠️ Neue Datei wird beim Veröffentlichen erstellt.';
+    setDriveStatus('Bereit', true);
   }
 }
 
 async function saveToDrive() {
   appData.meta.lastUpdated = new Date().toISOString();
   appData.meta.publishedBy = currentUser?.email || 'admin';
-  const content = JSON.stringify(appData, null, 2);
-  const blob = new Blob([content], { type: 'application/json' });
+  const jsonStr = JSON.stringify(appData, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
 
   if (driveFileId) {
-    // Update existing
+    // Update existing file
     const form = new FormData();
     form.append('metadata', new Blob([JSON.stringify({ name: DRIVE_FILE_NAME })], { type: 'application/json' }));
     form.append('file', blob);
-    const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`, {
-      method: 'PATCH',
-      headers: { Authorization: 'Bearer ' + accessToken },
-      body: form
-    });
-    if (!r.ok) throw new Error('Update fehlgeschlagen');
+    const r = await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`,
+      { method: 'PATCH', headers: { Authorization: 'Bearer ' + accessToken }, body: form }
+    );
+    if (!r.ok) {
+      // File might be gone - reset and create new
+      driveFileId = null;
+      return saveToDrive();
+    }
   } else {
-    // Create new
+    // Create new file
     const form = new FormData();
-    form.append('metadata', new Blob([JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: 'application/json' })], { type: 'application/json' }));
+    form.append('metadata', new Blob([JSON.stringify({ 
+      name: DRIVE_FILE_NAME, 
+      mimeType: 'application/json',
+      description: 'AC Rossoneri CMS Content'
+    })], { type: 'application/json' }));
     form.append('file', blob);
-    const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + accessToken },
-      body: form
-    });
-    if (!r.ok) throw new Error('Erstellen fehlgeschlagen');
+    const r = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      { method: 'POST', headers: { Authorization: 'Bearer ' + accessToken }, body: form }
+    );
+    if (!r.ok) throw new Error('Erstellen fehlgeschlagen: ' + r.status);
     const data = await r.json();
     driveFileId = data.id;
+    
     // Make publicly readable
-    await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}/permissions`, {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role: 'reader', type: 'anyone' })
-    });
+    await fetch(
+      `https://www.googleapis.com/drive/v3/files/${driveFileId}/permissions`,
+      {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'reader', type: 'anyone' })
+      }
+    );
+    document.getElementById('drive-info').textContent = '✅ Neue Datei erstellt: ' + DRIVE_FILE_NAME;
   }
   localStorage.setItem('acr_draft', JSON.stringify(appData));
 }
