@@ -510,30 +510,155 @@ let tags = [];
 //  DEFAULT DATA
 // ═══════════════════════════════════════════════
 function getDefaultData() {
-  return {
-    meta: { lastUpdated: null, publishedBy: null },
-    hero: {
-      badge: 'Fussballclub · Lausen BL · Seit 1962',
-      title: 'AC Rossoneri',
-      sub: 'Non Mollare · Niemals aufgeben'
+return {
+  "meta": {
+    "lastUpdated": "2026-07-22T00:00:00Z",
+    "publishedBy": "andreadanilo.mulas@gmail.com"
+  },
+  "hero": {
+    "badge": "Fussballclub · Lausen BL · Seit 1962",
+    "title": "AC Rossoneri",
+    "sub": "Non Mollare! · Lausen BL · Seit 1962"
+  },
+  "about": {
+    "text": "Der AC Rossoneri Lausen wurde 1962 gegründet und ist ein traditionsreicher Fussballclub aus Lausen BL. Mit Leidenschaft, Teamgeist und Rossoneri-DNA kämpfen wir auf jedem Platz."
+  },
+  "news": [
+    {
+      "id": "news-vorstand",
+      "date": "2026-06-01",
+      "label": "Juni 2026",
+      "title": "Der neue Vorstand des AC Rossoneri ❤️🖤",
+      "text": "Am Sonntag durften wir euch unsere beiden Präsidenten vorstellen – heute präsentieren wir euch mit Stolz den neuen Vorstand des AC Rossoneri. Von links nach rechts: Andrea Mulas – Co-Präsident · Özgün Bozkurt – Sportchef · Filippo Presti – Sponsoring · Laura Molteni – Sekretariat · Stefania Mulas – Marketing · Luca Rossi – Events · Alessandro Roberti – Leiter Junioren · Gaetano Ciraolo – Verantwortlicher Clubhaus · Luca Mulas – Co-Präsident. Forza Rossoneri! ❤️🖤⚽",
+      "image": "",
+      "tags": [
+        "#ACRossoneri",
+        "#NeuerVorstand",
+        "#ForzaRossoneri",
+        "#Vereinsleben",
+        "#Teamgeist"
+      ]
     },
-    about: { text: 'Der AC Rossoneri Lausen wurde 1962 gegründet und ist ein traditionsreicher Fussballclub aus Lausen BL.' },
-    news: [],
-    mannschaften: {
-      aktive:     { name:'1. Mannschaft',  trainer:'', assistent:'', training:'Di & Do', ort:'Bifang Hauptfeld, Lausen', trainerBild:'' },
-      senioren30: { name:'Senioren 30+',   trainer:'Andrea Mulas', assistent:'Eric Marmo', training:'Mittwoch 19:30 Uhr', ort:'Bifang, Lausen', trainerBild:'' },
-      senioren40: { name:'Senioren 40+',   trainer:'', assistent:'', training:'', ort:'Bifang, Lausen', trainerBild:'' },
-      senioren50: { name:'Senioren 50+',   trainer:'', assistent:'', training:'', ort:'Bifang, Lausen', trainerBild:'' },
-      juniorenC:  { name:'Junioren C',     trainer:'', assistent:'', training:'', ort:'Schelligacker, Lausen', trainerBild:'' },
-      juniorenD:  { name:'Junioren D',     trainer:'', assistent:'', training:'', ort:'Schelligacker, Lausen', trainerBild:'' },
-      juniorenE:  { name:'Junioren E',     trainer:'', assistent:'', training:'', ort:'Schelligacker, Lausen', trainerBild:'' },
-      juniorenF:  { name:'Junioren F',     trainer:'', assistent:'', training:'', ort:'Kifuplatz, Lausen', trainerBild:'' },
-      juniorenG:  { name:'Junioren G',     trainer:'', assistent:'', training:'', ort:'Kifuplatz, Lausen', trainerBild:'' },
+    {
+      "id": "news-copraesidium",
+      "date": "2026-05-28",
+      "label": "28. Mai 2026 · 64. Generalversammlung",
+      "title": "Neues Kapitel – Co-Präsidium Andrea & Luca Mulas ❤️🖤⚽",
+      "text": "Beim AC Rossoneri startet ein neues Kapitel! Mit echter Leidenschaft, Teamgeist und Rossoneri-DNA übernehmen Andrea und Luca Mulas das Co-Präsidium. Luca bringt 14 Jahre Erfahrung als Sportchef mit, Andrea hat den Verein während 7 Jahren in der Juniorenabteilung und administrativ tatkräftig unterstützt. Der neue Vorstand wird bald vorgestellt – stay tuned. 🔥💪🏻",
+      "image": "",
+      "tags": [
+        "#ForzaRossoneri",
+        "#NeueÄra",
+        "#CoPräsidium",
+        "#Generalversammlung"
+      ]
     },
-    sponsoren: [],
-    visamCup: { datum:'12.–14. Juni 2026', ort:'Sportanlage Stutz, Lausen', beschreibung:'', teams:'FC Basel, Atalanta Bergamo, Barça Academy Zurich', bild:'' },
-    kontakt: { strasse:'Schelligackerweg 4', ort:'4415 Lausen', email:'', tel:'', instagram:'@acrossoneri1962' }
-  };
+    {
+      "id": "news-aufstieg",
+      "date": "2026-05-01",
+      "label": "Mai 2026",
+      "title": "Senioren 30+ Aufgestiegen 💪🏻🔴⚫",
+      "text": "So viele Spiele, so viele Momente, so viel Herzblut. Und jetzt dieser Lohn: Der Aufstieg ist geschafft! Jeder einzelne Schritt, jeder Kampf, jedes Auf und Ab hat euch genau hierher gebracht. Das ist nicht nur Erfolg – das ist Geschichte, die man gemeinsam geschrieben hat. Herzlichen Glückwunsch an die Senioren 30+, ihr habt es euch verdient! 💪🏻👏🎻🎉",
+      "image": "",
+      "tags": [
+        "#Aufstieg",
+        "#matchday",
+        "#togetherwearestronger",
+        "#victory",
+        "#swissfootball"
+      ]
+    }
+  ],
+  "mannschaften": {
+    "aktive": {
+      "name": "1. Mannschaft",
+      "trainer": "Name Trainer eintragen",
+      "assistent": "Name Assistent",
+      "training": "Di & Do - Zeiten eintragen",
+      "ort": "Bifang Hauptfeld, Lausen",
+      "trainerBild": ""
+    },
+    "senioren30": {
+      "name": "Senioren 30+",
+      "trainer": "Andrea Mulas",
+      "assistent": "Eric Marmo",
+      "training": "Mittwoch 19:30 Uhr",
+      "ort": "Bifang, Lausen",
+      "trainerBild": ""
+    },
+    "senioren40": {
+      "name": "Senioren 40+",
+      "trainer": "Name Trainer eintragen",
+      "assistent": "-",
+      "training": "Zeiten eintragen",
+      "ort": "Bifang, Lausen",
+      "trainerBild": ""
+    },
+    "senioren50": {
+      "name": "Senioren 50+",
+      "trainer": "Name Trainer eintragen",
+      "assistent": "-",
+      "training": "Zeiten eintragen",
+      "ort": "Bifang, Lausen",
+      "trainerBild": ""
+    },
+    "juniorenC": {
+      "name": "Junioren C",
+      "trainer": "Name Trainer eintragen",
+      "assistent": "-",
+      "training": "Zeiten eintragen",
+      "ort": "Schelligacker, Lausen",
+      "trainerBild": ""
+    },
+    "juniorenD": {
+      "name": "Junioren D",
+      "trainer": "Name Trainer eintragen",
+      "assistent": "-",
+      "training": "Zeiten eintragen",
+      "ort": "Schelligacker, Lausen",
+      "trainerBild": ""
+    },
+    "juniorenE": {
+      "name": "Junioren E",
+      "trainer": "Name Trainer eintragen",
+      "assistent": "-",
+      "training": "Zeiten eintragen",
+      "ort": "Schelligacker, Lausen",
+      "trainerBild": ""
+    },
+    "juniorenF": {
+      "name": "Junioren F",
+      "trainer": "Name Trainer eintragen",
+      "assistent": "-",
+      "training": "Zeiten eintragen",
+      "ort": "Kifuplatz, Lausen",
+      "trainerBild": ""
+    },
+    "juniorenG": {
+      "name": "Junioren G",
+      "trainer": "Name Trainer eintragen",
+      "assistent": "-",
+      "training": "Zeiten eintragen",
+      "ort": "Kifuplatz, Lausen",
+      "trainerBild": ""
+    }
+  },
+  "sponsoren": [],
+  "visamCup": {
+    "datum": "12.–14. Juni 2026",
+    "ort": "Sportanlage Stutz, Lausen",
+    "beschreibung": "Der 2. Visam Sport Liestal Cup – ein unvergessliches Turnier mit top Teams aus der ganzen Schweiz und Europa.",
+    "teams": "FC Basel, Atalanta Bergamo, Barça Academy Zurich",
+    "bild": ""
+  },
+  "kontakt": {
+    "strasse": "Schelligackerweg 4",
+    "ort": "4415 Lausen",
+    "email": "",
+    "tel": "",
+    "instagram": "@acrossoneri1962"
+  }
+};
 }
 
 // ═══════════════════════════════════════════════
